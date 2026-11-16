@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><meta name="theme-color" content="#101c28"><title>Fusion Design Platform · 三维工作台</title></head>
+<body>
+<header><a class="brand" href="./"><span class="brand-mark">◎</span><span>FUSION <b>DESIGN PLATFORM</b><small>聚变装置设计工作台</small></span></a><div class="header-right"><span class="badge">GEOMETRY WORKSPACE</span><span>v0.1.0 / 首次公开发布</span></div></header>
+<main>
+<aside aria-label="设计控制">
+<div class="section-label">01 / DESIGN SETUP</div><h1>装置与工况</h1>
+<label for="configuration">装置构型</label><select id="configuration"><option value="tokamak">常规托卡马克</option><option value="st">球形托卡马克 · 尚未实现</option><option value="stellarator">仿星器 · 尚未实现</option><option value="spheromak">球马克 · 尚未实现</option><option value="linear">直线磁约束 · 尚未实现</option><option value="frc">FRC · 尚未实现</option><option value="free">自由探索 · 尚未实现</option></select>
+<label for="case">参考案例</label><select id="case"><option value="custom">自定义工况 · 几何模型</option><option value="sparc-v2">SPARC V2 · 2020 文献</option><option value="sparc-prd">SPARC_PRD · 9.0.1 计算</option></select>
+<p id="case-note" class="note" role="status">通用几何初值，不代表任何真实装置。</p>
+<fieldset id="parameters"><legend>几何参数 <span>SI / m</span></legend><div id="parameter-inputs"></div><p id="validation" role="alert"></p><button id="reset" class="secondary">恢复几何初值</button></fieldset>
+<fieldset id="target-editor"></fieldset><fieldset id="layers"><legend>结构图层 <span>简化示意</span></legend></fieldset>
+<div class="model-note"><strong>参数化形状模型</strong><p>等离子体边界为解析 D 形旋转曲面；不是 Grad–Shafranov 平衡。线圈与真空室仅示意，不代表工程设计。</p></div>
+</aside>
+<section class="workspace">
+<div class="viewport" id="viewport"><div class="view-heading"><div class="section-label">02 / GEOMETRY VIEW</div><h2 id="view-title">轴对称托卡马克</h2><span id="view-status" class="status"><i></i>几何预览</span></div>
+<div class="view-toolbar" role="group" aria-label="视角控制"><button data-view="iso" title="重置视角">等轴</button><button data-view="front">正视</button><button data-view="top">俯视</button><button id="cutaway" aria-pressed="true">剖开展示</button></div>
+<div id="unavailable" hidden role="status"></div><div class="view-bottom"><span>左键旋转 · 滚轮缩放 · 右键平移</span><span>右手系 · Z 竖直 · 1 场景单位 = 1 m</span></div></div>
+<section class="results" aria-label="科学结果"><div class="results-title"><div><div class="section-label">03 / SCIENTIFIC RESULTS</div><h2>科学结果</h2></div><span id="science-status" class="badge muted">未接入物理求解器</span></div><div id="science-data" aria-live="polite"></div><div class="metrics"><article><span>聚变功率 P<sub>fus</sub></span><strong>— <small>MW</small></strong><p>尚未计算</p></article><article><span>聚变增益 Q</span><strong>—</strong><p>尚未计算</p></article><article><span>能量约束时间 τ<sub>E</sub></span><strong>— <small>s</small></strong><p>尚未计算</p></article><article><span>物理可行性</span><strong class="text-value">未验证</strong><p>几何预览不构成物理结论</p></article></div><p class="result-note">当前仅更新几何形状。没有执行 POPCON、磁平衡、输运或工程验证，也未加载 SPARC 计算数据。</p></section>
+</section>
+</main><footer style="padding:16px 24px;font-size:11px;color:#91a4b6">独立科研工作台 · SPARC V2 尚未完整复现 · 几何为参数化示意，非工程验证模型 · 未求解工况不提供计算输出 · <a style="color:#7bd3bb" href="./THIRD_PARTY_NOTICES.txt" target="_blank" rel="noopener">代码 MIT 与第三方声明</a> · <a style="color:#7bd3bb" href="./DATA_LICENSE.txt" target="_blank" rel="noopener">数据许可 CC BY 4.0（限定范围）</a></footer><script type="module" src="/main.js"></script>
+</body></html>
+
+
+
+
+
