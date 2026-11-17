@@ -5,8 +5,8 @@ import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { build } from 'vite';
 const project=fileURLToPath(new URL('../',import.meta.url));
-export const sourceFiles=['LICENSE','README.md','package.json','package-lock.json','vite.config.js','scripts/release.mjs','.github/workflows/pages.yml',
-  ...['index.html','main.js','geometry.js','science.js','target.js','target.test.js','style.css','cases.json','public/THIRD_PARTY_NOTICES.txt','public/DATA_LICENSE.txt'].map(p=>'web/'+p)];
+export const sourceFiles=['LICENSE','README.md','package.json','package-lock.json','vite.config.js','scripts/release.mjs','scripts/extract-designs.mjs','.github/workflows/pages.yml',
+  ...['index.html','main.js','geometry.js','science.js','design.js','designs.json','design.test.js','target.js','target.test.js','style.css','cases.json','public/THIRD_PARTY_NOTICES.txt','public/DATA_LICENSE.txt'].map(p=>'web/'+p)];
 const target=process.argv[2];
 if(!target||!path.isAbsolute(target))throw Error('Supply an absolute, new local candidate directory outside the project.');
 const destination=path.resolve(target),relative=path.relative(project,destination);

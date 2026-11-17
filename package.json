@@ -1,13 +1,14 @@
 {
   "name": "fusion-design-platform",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.js",
     "build": "vite build --config vite.config.js",
     "preview": "vite preview --config vite.config.js",
-    "prepare:release": "node scripts/release.mjs"
+    "prepare:release": "node scripts/release.mjs",
+    "test": "node --test web/target.test.js web/design.test.js"
   },
   "dependencies": {
     "plotly.js-basic-dist-min": "4.3.0",

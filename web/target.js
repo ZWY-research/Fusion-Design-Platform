@@ -1,6 +1,7 @@
 import { defaultCase, validateGeometry } from './geometry.js';
 
-export const quantities = {ne:['m^-3','电子密度'],Te:['keV','电子温度'],Ti:['keV','离子温度'],Pfusion:['MW','总聚变功率'],Q:['1','聚变增益'],duration:['s','目标持续运行时间'],B0:['T','轴上环向磁场'],Ip:['MA','等离子体电流'],R0:['m','大半径'],a:['m','小半径'],kappa:['1','分离面拉长比'],delta:['1','分离面三角形变']};
+export const quantities = {ne:['m^-3','电子密度'],Te:['keV','电子温度'],Ti:['keV','离子温度'],Pfusion:['MW','总聚变功率'],Q:['1','聚变增益'],duration:['s','目标持续运行时间'],B0:['T','轴上环向磁场'],Ip:['MA','等离子体电流'],R0:['m','大半径'],a:['m','小半径'],kappa:['1','分离面拉长比'],delta:['1','分离面三角形变'],RF_absorbed:['MW','吸收 RF 功率'],RF_launched:['MW','发射 RF 功率'],q_star:['1','q-star 形状代理'],beta:['1','环向热 beta']};
+export const isEditable = c => c.caseId==='custom'&&!c.candidate_id;
 const range = (value,unit,definition) => ({value,min:null,max:null,unit,definition});
 export function newTarget(source = defaultCase) {
   const c = structuredClone(source), p = c.physical ?? {};
@@ -9,9 +10,10 @@ export function newTarget(source = defaultCase) {
   c.target={version:1,fuel:{D:.5,T:.5,unit:'1',definition:'主燃料粒子数分数，D+T=1；不代表杂质稀释'},state:Object.fromEntries(['ne','Te','Ti'].map(k=>[k,{...range(p[k]??(k==='Ti'?p.Te:null),quantities[k][0],quantities[k][1]),average:'volume',profile:''}])),
     goals:{Pfusion:range(source.results?.P_fusion_MW??null,'MW','总聚变功率目标，非计算输出'),Q:range(source.results?.Q_absorbed??null,'1','Pfusion/(Pohm+RFabs)'),duration:range(null,'s','目标持续运行时间，非能量约束时间')},
     fixedInputs:{B0:range(p.B0??null,'T','轴上环向磁场固定输入'),Ip:range(p.Ip??null,'MA','总等离子体电流固定输入')},hardConstraints:[],design:Object.fromEntries(['R0','a','kappa','delta'].map(k=>[k,{role:'fixed',min:null,max:null,unit:quantities[k][0],definition:quantities[k][1]}]))};
+  if(source.target){c.target=structuredClone(source.target);c.provenance.copiedFromCandidate=source.candidate_id??null;}
   return invalidate(c);
 }
-export function invalidate(c) { c.results=null;c.physical={};delete c.constraints;c.resultKind='目标已编辑 · 计算结果尚未更新';c.validation='尚未求解；目标值、容许范围与几何不构成物理可行性验证。';return c; }
+export function invalidate(c) { c.results=null;c.physical={};delete c.constraints;delete c.candidate_id;delete c.geometry_id;delete c.candidateEvidence;c.resultKind='目标已编辑 · 计算结果尚未更新';c.validation='尚未求解；目标值、容许范围与几何不构成物理可行性验证。';return c; }
 export function validateCase(c) {
   if(c?.schemaVersion!==1||c.caseId!=='custom'||!['tokamak','st','stellarator','spheromak','linear','frc','free'].includes(c.configuration)||!c.geometry||c.target?.version!==1) throw Error('不是支持的自定义工况 schemaVersion=1 / target.version=1。');
   {const e=validateGeometry(c.geometry);if(e)throw Error(e);}
@@ -31,7 +33,7 @@ export function parseCase(text) { const c=JSON.parse(text);validateCase(c);retur
 
 export function mountTargetEditor({getCase,applyCase,markEdited}) {
   const host=document.getElementById('target-editor');
-  host.innerHTML=`<legend>目标等离子体工况</legend><p class="note">输入为设计意图，非求解结果。密度使用 m⁻³，温度使用 keV；ne/Te/Ti 必填且大于零，其余留空表示未知。</p><div class="target-actions"><button id="target-new">新建</button><button id="target-copy">复制当前案例</button></div><fieldset id="target-fields"><label>工况名称<input id="target-name" maxlength="80"></label><div class="target-pair"><label>D 分数<input id="fuel-D" type="number" step="any"></label><label>T 分数<input id="fuel-T" type="number" step="any"></label></div><div id="target-rows"></div><label>Q 定义<select id="target-q"><option>Pfusion/(Pohm+RFabs)</option><option>Pfusion/(Pohm+RFlaunch)</option></select></label><details><summary>硬约束与设计变量</summary><p class="note">硬约束数组项：quantity（ne/Te/Ti/Pfusion/Q/duration/B0/Ip/R0/a/kappa/delta）、domain（physical/engineering）、unit、definition、min/max（缺省界限填 null）。几何 design 中 role 为 fixed 或 optimize；优化须给出 min/max。仅声明，不执行搜索。</p><label>硬约束 JSON<textarea id="target-constraints" rows="5" spellcheck="false"></textarea></label><label>几何变量角色与范围 JSON<textarea id="target-design" rows="6" spellcheck="false"></textarea></label></details></fieldset><p id="target-message" role="status"></p><div class="target-actions"><button id="target-save">保存（单槽覆盖）</button><button id="target-load">加载本地</button><button id="target-export">导出 JSON</button><label class="file-button">导入 JSON<input id="target-import" type="file" accept=".json,application/json"></label></div>`;
+  host.innerHTML=`<legend>目标等离子体工况</legend><p class="note">输入为设计意图，非求解结果。密度使用 m⁻³，温度使用 keV；ne/Te/Ti 必填且大于零，其余留空表示未知。</p><div class="target-actions"><button id="target-new">新建</button><button id="target-copy">复制当前案例</button></div><fieldset id="target-fields"><label>工况名称<input id="target-name" maxlength="80"></label><div class="target-pair"><label>D 分数<input id="fuel-D" type="number" step="any"></label><label>T 分数<input id="fuel-T" type="number" step="any"></label></div><div id="target-rows"></div><label>Q 定义<select id="target-q"><option>Pfusion/(Pohm+RFabs)</option><option>Pfusion/(Pohm+RFlaunch)</option></select></label><details><summary>硬约束与设计变量</summary><p class="note">硬约束数组项：quantity（ne/Te/Ti/Pfusion/Q/duration/B0/Ip/R0/a/kappa/delta/RF_absorbed/RF_launched/q_star/beta）、domain（physical/engineering）、unit、definition、min/max（缺省界限填 null）。几何 design 中 role 为 fixed 或 optimize；优化须给出 min/max。仅声明，不执行搜索。</p><label>硬约束 JSON<textarea id="target-constraints" rows="5" spellcheck="false"></textarea></label><label>几何变量角色与范围 JSON<textarea id="target-design" rows="6" spellcheck="false"></textarea></label></details></fieldset><p id="target-message" role="status"></p><div class="target-actions"><button id="target-save">保存（单槽覆盖）</button><button id="target-load">加载本地</button><button id="target-export">导出 JSON</button><label class="file-button">导入 JSON<input id="target-import" type="file" accept=".json,application/json"></label></div>`;
   const $=id=>document.getElementById(id), fields=[];
   const secondary=document.createElement('details');secondary.innerHTML='<summary>性能目标与固定输入</summary>';
   for(const [group,keys] of [['state',['ne','Te','Ti']],['goals',['Pfusion','Q','duration']],['fixedInputs',['B0','Ip']]])for(const k of keys){
@@ -40,12 +42,12 @@ export function mountTargetEditor({getCase,applyCase,markEdited}) {
   }
   $('target-rows').append(secondary);
   const message=s=>$('target-message').textContent=s;
-  function sync(){const c=getCase(),t=c.target,editable=c.caseId==='custom';$('target-fields').disabled=!editable;$('target-fields').hidden=!editable;$('target-copy').disabled=editable;$('target-save').disabled=$('target-export').disabled=!editable; if(!t)return;
+  function sync(){const c=getCase(),t=c.target,editable=isEditable(c);$('target-fields').disabled=!editable;$('target-fields').hidden=!editable;$('target-copy').disabled=editable;$('target-save').disabled=$('target-export').disabled=!editable; if(!t)return;
     $('target-name').value=c.label??'';for(const k of ['D','T'])$(`fuel-${k}`).value=t.fuel[k];
     for(const [g,k]of fields){for(const a of ['value','min','max'])$(`target-${k}-${a}`).value=t[g][k][a]??'';if(g==='state'){$(`average-${k}`).value=t[g][k].average;$(`profile-${k}`).value=t[g][k].profile;}}
     $('target-q').value=t.goals.Q.definition;$('target-constraints').value=JSON.stringify(t.hardConstraints,null,2);$('target-design').value=JSON.stringify(t.design,null,2);
   }
-  function collect(){if(getCase().caseId!=='custom')throw Error('请先复制为自定义工况。');const c=structuredClone(getCase()),t=c.target;c.label=$('target-name').value.trim()||'自定义目标工况';for(const k of ['D','T'])t.fuel[k]=$(`fuel-${k}`).value===''?null:Number($(`fuel-${k}`).value);
+  function collect(){if(!isEditable(getCase()))throw Error('请先复制为自定义工况。');const c=structuredClone(getCase()),t=c.target;c.label=$('target-name').value.trim()||'自定义目标工况';for(const k of ['D','T'])t.fuel[k]=$(`fuel-${k}`).value===''?null:Number($(`fuel-${k}`).value);
     for(const [g,k] of fields){for(const a of ['value','min','max']){const s=$(`target-${k}-${a}`).value;t[g][k][a]=s===''?null:Number(s);}if(g==='state'){t[g][k].average=$(`average-${k}`).value;t[g][k].profile=$(`profile-${k}`).value;}}
     t.goals.Q.definition=$('target-q').value;t.hardConstraints=JSON.parse($('target-constraints').value);t.design=JSON.parse($('target-design').value);validateCase(c);return invalidate(c);
   }

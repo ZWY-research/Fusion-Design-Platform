@@ -1,7 +1,7 @@
 Fusion Design Platform — Data licensing scope
 Copyright (c) 2026 ZWY-research
 
-CC BY 4.0 applies only to project-owned computational results and original annotations/selection/arrangement in web/cases.json, to the extent ZWY-research holds copyright or similar rights. Attribute: ZWY-research, Fusion Design Platform v0.1.0, https://github.com/ZWY-research/Fusion-Design-Platform . Indicate modifications and retain scientific source references. This is not a claim of exclusive rights over numerical facts.
+CC BY 4.0 applies only to project-owned computational results and original annotations/selection/arrangement in web/cases.json and web/designs.json, to the extent ZWY-research holds copyright or similar rights. Attribute: ZWY-research, Fusion Design Platform v0.2.0, https://github.com/ZWY-research/Fusion-Design-Platform . Indicate modifications and retain scientific source references. This is not a claim of exclusive rights over numerical facts.
 
 Excluded: literature reference material and facts (including the SPARC V2 reference values), third-party source code/data and metadata, trademarks, OPEN-ADAS atomic datasets and any rights not owned by ZWY-research. These are not relicensed. Source citations remain required independently of this grant. No original OPEN-ADAS files, cooling tables, processed atomic datasets or third-party figures are distributed here. Published POPCON samples are overall plasma operating-point analysis results, not atomic database extracts.
 

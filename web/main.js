@@ -2,11 +2,12 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import './style.css';
 import { defaultCase, validateGeometry, buildDevice, disposeDevice } from './geometry.js';
-import { cases, showScience } from './science.js';
-import { newTarget, invalidate, mountTargetEditor } from './target.js';
+import { cases, showScience, loadPlotly } from './science.js';
+import { newTarget, invalidate, mountTargetEditor, isEditable } from './target.js';
+import { mountDesignWorkspace } from './design.js';
 
 const $ = id => document.getElementById(id);
-let activeCase = newTarget(), device, cutaway = true;
+let activeCase = newTarget(), device, cutaway = true, designWorkspace;
 const visibility = { plasma: true, vessel: true, tf: true, pf: true, cs: true };
 const parameterSpecs = [['R0', '大半径 R₀', 1, 6, .05], ['a', '小半径 a', .2, 2, .02], ['kappa', '边界拉长比 κ', 1, 2.5, .05], ['delta', '边界三角形变 δ', -.6, .6, .02]];
 for (const [key, label, min, max, step] of parameterSpecs) {
@@ -25,7 +26,7 @@ for (const [id, title, color] of [['plasma', '等离子体边界', '#55d8c0'], [
   const label = document.createElement('label'); label.innerHTML = `<input type="checkbox" id="layer-${id}" checked>${title}<span class="swatch" style="background:${color}"></span>`; $('layers').append(label);
   $(`layer-${id}`).addEventListener('change', e => { visibility[id] = e.target.checked; if (device) device.layers[id].visible = e.target.checked; render(); });
 }
-function syncInputs() { for (const [key,,, ,step] of parameterSpecs) { $(`${key}-range`).step = activeCase.caseId === 'custom' ? step : 'any'; $(key).value = activeCase.geometry[key]; $(`${key}-range`).value = activeCase.geometry[key]; } }
+function syncInputs() { for (const [key,,, ,step] of parameterSpecs) { $(`${key}-range`).step = isEditable(activeCase) ? step : 'any'; $(key).value = activeCase.geometry[key]; $(`${key}-range`).value = activeCase.geometry[key]; } }
 const viewport = $('viewport'), scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(38, 1, .01, 300); camera.up.set(0, 0, 1);
 let renderer, controls;
@@ -61,21 +62,24 @@ function setView(view = 'iso') {
 }
 function availability() {
   const available = $('configuration').value === 'tokamak';
-  $('parameters').disabled = !available || activeCase.caseId !== 'custom'; $('layers').disabled = !available;
+  $('parameters').disabled = !available || !isEditable(activeCase); $('layers').disabled = !available;
   if (device) device.root.visible = available;
   $('unavailable').hidden = available && !!renderer;
   if (!available) $('unavailable').textContent = $('configuration').value !== 'tokamak' ? '该装置构型尚未实现。请选择常规托卡马克继续。' : '该参考案例尚未接入。未加载 SPARC 工程几何或物理数据。';
-  $('view-title').textContent = available ? (cases.find(c=>c.caseId===activeCase.caseId)?.label ?? '轴对称托卡马克') : '等待可用构型与案例';
-  if (renderer) $('view-status').textContent = available ? '● 几何预览 · 未执行物理计算' : '尚未实现 / 未加载';
-  $('case-note').textContent = activeCase.caseId === 'custom' ? '自定义几何；不沿用任何参考案例的计算结果。' : '有来源的分离面参数；线圈/真空室仍为示意。参考几何锁定，修改请切回自定义。';
+  $('view-title').textContent = available ? (activeCase.candidate_id?activeCase.label:cases.find(c=>c.caseId===activeCase.caseId)?.label ?? '轴对称托卡马克') : '等待可用构型与案例';
+  if (renderer) $('view-status').textContent = available ? (activeCase.candidate_id?`● 候选几何 · ${activeCase.resultKind}`:'● 几何预览 · 未执行在线物理计算') : '尚未实现 / 未加载';
+  $('case-note').textContent = activeCase.candidate_id ? `${activeCase.candidate_id}；真实离线计算，结构仍为示意。修改前请复制当前案例。` : activeCase.caseId === 'custom' ? '自定义几何；不沿用任何参考案例的计算结果。' : '有来源的分离面参数；线圈/真空室仍为示意。参考几何锁定，修改请切回自定义。';
   render();
 }
 let customCase = structuredClone(activeCase);
-function markTargetEdited(){if(activeCase.caseId==='custom'){invalidate(activeCase);$('science-status').textContent='目标已编辑 · 计算结果尚未更新（尚未求解）';}}
+function markTargetEdited(){if(isEditable(activeCase)){invalidate(activeCase);showScience('custom');$('science-status').textContent='目标已编辑 · 计算结果尚未更新（尚未求解）';designWorkspace?.clearSelection();}}
 function applyCustom(c,refresh=true){activeCase=c;customCase=structuredClone(c);$('case').value='custom';$('configuration').value=c.configuration;if(refresh){syncInputs();rebuild();availability();setView();showScience('custom');}markTargetEdited();}
-$('configuration').addEventListener('change', () => { if(activeCase.caseId==='custom'){activeCase.configuration=$('configuration').value;customCase=structuredClone(invalidate(activeCase));} availability(); showScience($('configuration').value === 'tokamak' ? activeCase.caseId : 'custom'); markTargetEdited(); });
+function applyCandidate(c){if(isEditable(activeCase))customCase=structuredClone(activeCase);activeCase=c;$('case').value='design';$('configuration').value='tokamak';$('validation').textContent='';syncInputs();rebuild();availability();setView();showScience('custom',c);targetEditor.sync();}
+$('configuration').addEventListener('change', () => { if(isEditable(activeCase)){activeCase.configuration=$('configuration').value;customCase=structuredClone(invalidate(activeCase));} availability(); showScience($('configuration').value === 'tokamak' ? activeCase.caseId : 'custom',$('configuration').value === 'tokamak'&&activeCase.candidate_id?activeCase:null); markTargetEdited(); });
 $('case').addEventListener('change', () => {
-  if (activeCase.caseId === 'custom') customCase = structuredClone(activeCase);
+  if (isEditable(activeCase)) customCase = structuredClone(activeCase);
+  if($('case').value==='design'){designWorkspace.selectReference();return;}
+  designWorkspace.clearSelection();
   const selected = cases.find(c => c.caseId === $('case').value);
   activeCase = selected ? structuredClone(selected) : structuredClone(customCase);
   $('configuration').value=activeCase.configuration;
@@ -85,5 +89,6 @@ $('reset').addEventListener('click', () => { activeCase.geometry=structuredClone
 $('cutaway').addEventListener('click', e => { cutaway = !cutaway; e.currentTarget.setAttribute('aria-pressed', cutaway); rebuild(); availability(); });
 document.querySelectorAll('[data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
 const targetEditor=mountTargetEditor({getCase:()=>activeCase,applyCase:applyCustom,markEdited:markTargetEdited});
+designWorkspace=mountDesignWorkspace({onSelect:applyCandidate,loadPlotly});
 syncInputs(); rebuild(); setView(); availability();markTargetEdited();
 
