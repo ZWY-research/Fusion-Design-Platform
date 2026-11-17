@@ -30,3 +30,9 @@
 ## 发布
 
 Pages 工作流仅手动触发；`publish=true` 且仓库变量 `PAGES_RELEASE_APPROVED=true` 才部署。只部署 `dist/pages`。发布后访问 https://zwy-research.github.io/Fusion-Design-Platform/ 。
+
+## 参考预设与多燃料输入
+
+六套预设区分文献值、设计假设、平台绘图示例和未知项。ARC 按 Sorbom 2015 表1/§3.2.1（作者稿 https://arxiv.org/html/1409.3540 ，DOI 10.1016/j.fusengdes.2015.07.008）；Ti=Te 为设计假设。ITER D-T 为 2002 Technical Basis 表1.2.1-1 历史名义设计；D-D/H 为 ITER School 2025 Loarte 报告第73/77页的预氚方案，非已完成放电，不套用 D-T 的功率或 Q。共同装置尺寸与各阶段运行参数逐字段注明来源，未知密度/温度/完整剖面留空。
+
+H/D/T 输入兼容旧 D/T JSON；He3/He4 仅预留组分登记，不代表求解支持。D-D/纯H均尚未支持物理求解。所有参考预设可复制，编辑/导入清除计算；来源保留。示例几何不等于工程设计。公开内容仅数值事实和原创整理，不包含论文图片、全文或原始受限数据，不对第三方重新授权。

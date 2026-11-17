@@ -4,7 +4,7 @@ import * as THREE from 'three';
 export const defaultCase = { schemaVersion: 1, configuration: 'tokamak', caseId: 'custom', geometry: { R0: 3, a: 1, kappa: 1.7, delta: 0.3 } };
 export function validateGeometry(p) {
   if (!Object.values(p).every(Number.isFinite)) return '参数必须是有限数值。';
-  if (p.R0 < 1 || p.R0 > 6 || p.a < .2 || p.a > 2 || p.kappa < 1 || p.kappa > 2.5 || Math.abs(p.delta) > .6) return '参数超出当前几何工作台范围。';
+  if (p.R0 < 1 || p.R0 > 8 || p.a < .2 || p.a > 2 || p.kappa < 1 || p.kappa > 2.5 || Math.abs(p.delta) > .6) return '参数超出当前几何工作台范围。';
   if (p.R0 - p.a < .5) return '需要 R₀ − a ≥ 0.5 m，以保留简化中心结构空间。';
   if (p.R0 - 1.28 * p.a < .2) return 'TF 线圈内侧需保留至少 0.2 m 的中心结构空间。';
   return '';

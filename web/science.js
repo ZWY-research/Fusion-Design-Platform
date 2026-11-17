@@ -1,6 +1,8 @@
 // Static, curated evidence only. This module never calls a physics solver.
 import data from './cases.json';
-export const cases = data.cases;
+import designInputs from './designs.json' with {type:'json'};
+import {newTarget,fuelApplicability} from './target.js';
+export const cases = data.cases.map(c=>({...c,target:c.caseId==='sparc-prd'?{...newTarget(c).target,models:structuredClone(designInputs.models.A.settings)}:newTarget(c).target}));
 let plotlyPromise;
 export const loadPlotly = () => plotlyPromise ??= import('plotly.js-basic-dist-min').then(m => m.default);
 let generation = 0;
@@ -16,6 +18,8 @@ export async function showScience(caseId,candidate=null) {
   if (!current) return;
   const text = (tag, value, parent = host) => { const el = document.createElement(tag); el.textContent = value; parent.append(el); return el; };
   if(current.candidate_id){showCandidate(current,host,text);return;}
+  if(current.presetFields){text('h3','参考字段与自动填充来源');for(const [key,q]of Object.entries(current.presetFields))text('p',key+' = '+(q.value??'未知')+' '+q.unit+' · '+q.definition+' · '+q.kind+' · '+q.source);text('p',fuelApplicability(current.target.fuel));if(!current.results){for(const id of current.sourceIds){const source=data.sources[id];const a=text('a',source.title+' ↗ ');a.href=source.url;a.target='_blank';a.rel='noopener noreferrer';}text('p',current.validation);return;}}
+
   text('h3', current.label);
   text('p', `${current.resultKind}。ne=${(current.physical.ne/1e20).toFixed(4)} ×10²⁰ m⁻³；Te=${current.physical.Te.toFixed(4)} keV；B₀=${current.physical.B0} T；Ip=${current.physical.Ip} MA；H98=${current.physical.H98}；${current.physical.fuel}。`);
   const values = current.results;

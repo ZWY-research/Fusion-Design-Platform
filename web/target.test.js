@@ -2,7 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { newTarget, validateCase, parseCase } from './target.js';
+import {fuelApplicability} from './target.js';
 const reference = JSON.parse(readFileSync(new URL('./cases.json', import.meta.url))).cases[0];
+test('all presets copy with explicit unknowns and H/D/T modes round-trip without predictions',()=>{
+  const presets=JSON.parse(readFileSync(new URL('./cases.json',import.meta.url))).cases;
+  assert.equal(presets.length,6);
+  for(const p of presets){const c=newTarget(p);validateCase(c);const round=parseCase(JSON.stringify(c));assert.equal(round.results,null);assert.deepEqual(round.target.fuel,c.target.fuel);assert.ok(round.provenance.fields);}
+  const h=newTarget(presets.find(c=>c.caseId==='iter-h'));assert.match(fuelApplicability(h.target.fuel),/尚未支持/);assert.equal(h.target.goals.Q.value,null);
+  h.target.fuel.H=.5;assert.throws(()=>validateCase(h));
+  const arc=newTarget(presets.find(c=>c.caseId==='arc-2015'));assert.equal(arc.target.state.Te.value,14);assert.equal(arc.target.state.Ti.value,14);assert.equal(arc.target.state.Ti.kind,'model_assumption');
+  const custom=newTarget();validateCase(custom);assert.equal(custom.target.state.ne.kind,'platform_example');
+});
 
 test('reference copy preserves source and separates targets from solver results', () => {
   const original = JSON.stringify(reference), copy = newTarget(reference);

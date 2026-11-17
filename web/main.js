@@ -9,7 +9,7 @@ import { mountDesignWorkspace } from './design.js';
 const $ = id => document.getElementById(id);
 let activeCase = newTarget(), device, cutaway = true, designWorkspace;
 const visibility = { plasma: true, vessel: true, tf: true, pf: true, cs: true };
-const parameterSpecs = [['R0', '大半径 R₀', 1, 6, .05], ['a', '小半径 a', .2, 2, .02], ['kappa', '边界拉长比 κ', 1, 2.5, .05], ['delta', '边界三角形变 δ', -.6, .6, .02]];
+const parameterSpecs = [['R0', '大半径 R₀', 1, 8, .05], ['a', '小半径 a', .2, 2, .02], ['kappa', '边界拉长比 κ', 1, 2.5, .05], ['delta', '边界三角形变 δ', -.6, .6, .02]];
 for (const [key, label, min, max, step] of parameterSpecs) {
   const row = document.createElement('div');
   row.innerHTML = `<div class="param-head"><label for="${key}">${label}${['R0','a'].includes(key) ? ' / m' : ''}</label><input id="${key}" type="number" min="${min}" max="${max}" step="${step}"></div><input id="${key}-range" aria-label="${label}滑块" type="range" min="${min}" max="${max}" step="${step}">`;
@@ -68,7 +68,7 @@ function availability() {
   if (!available) $('unavailable').textContent = $('configuration').value !== 'tokamak' ? '该装置构型尚未实现。请选择常规托卡马克继续。' : '该参考案例尚未接入。未加载 SPARC 工程几何或物理数据。';
   $('view-title').textContent = available ? (activeCase.candidate_id?activeCase.label:cases.find(c=>c.caseId===activeCase.caseId)?.label ?? '轴对称托卡马克') : '等待可用构型与案例';
   if (renderer) $('view-status').textContent = available ? (activeCase.candidate_id?`● 候选几何 · ${activeCase.resultKind}`:'● 几何预览 · 未执行在线物理计算') : '尚未实现 / 未加载';
-  $('case-note').textContent = activeCase.candidate_id ? `${activeCase.candidate_id}；真实离线计算，结构仍为示意。修改前请复制当前案例。` : activeCase.caseId === 'custom' ? '自定义几何；不沿用任何参考案例的计算结果。' : '有来源的分离面参数；线圈/真空室仍为示意。参考几何锁定，修改请切回自定义。';
+  $('case-note').textContent = activeCase.candidate_id ? `${activeCase.candidate_id}；真实离线计算，结构仍为示意。修改前请复制当前案例。` : activeCase.caseId === 'custom' ? '自定义几何；不沿用任何参考案例的计算结果。' : (activeCase.presetFields?'参考值及缺项见来源表；形状可能使用已标注的平台示例。修改请复制。':'有来源的分离面参数；线圈/真空室仍为示意。参考几何锁定，修改请切回自定义。');
   render();
 }
 let customCase = structuredClone(activeCase);
